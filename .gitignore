@@ -1,0 +1,19 @@
+# Environnement Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Secrets (aucun actuellement, mais bonne pratique)
+.env
+
+# Environnement virtuel
+.venv/
+venv/
+env/
+
+# Logs
+*.log
+
+# Donnees brutes volumineuses : on garde uniquement un exemple temoin
+data/raw/*
+!data/raw/amr_resistance_20260924T091940Z.csv

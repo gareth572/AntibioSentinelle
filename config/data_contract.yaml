@@ -1,0 +1,47 @@
+dataset: antibiosentinelle_resistance
+version: 1.0
+grain: >
+  une ligne represente le taux de resistance observe pour une combinaison
+  unique annee, pays, bacterie, antibiotique teste, type de patient,
+  en Europe entre 1998 et 2019
+owner: "[Tchoula Gareth]"
+
+source:
+  name: "ECDC / TESSy (via Zenodo, Emons, Blanquart & Lehtinen, 2024)"
+  url: "https://zenodo.org/records/14224680"
+  file: "summary_AMR_filtered.csv"
+  doi: "10.5281/zenodo.14224680"
+
+  required_fields:
+  - year
+  - country
+  - pathogen
+  - antibiotic
+  - patient_type
+  - resistance_rate
+  - n_tested
+
+optional_fields:
+  - pathogen_long
+  - antibiotic_long
+  - antibiotic_class
+
+primary_key:
+  - year
+  - country
+  - pathogen
+  - antibiotic
+  - patient_type
+
+quality_rules:
+  - year doit etre un entier compris entre 1998 et 2019
+  - country ne doit pas etre vide
+  - pathogen ne doit pas etre vide
+  - antibiotic ne doit pas etre vide
+  - resistance_rate doit etre compris entre 0 et 1
+  - n_tested doit etre superieur ou egal a 30
+  - la cle primaire ne doit pas etre dupliquee
+
+deduplication_strategy: >
+  upsert sur la cle primaire ; la derniere collecte remplace la precedente
+  pour une meme cle
