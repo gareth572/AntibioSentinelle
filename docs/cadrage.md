@@ -22,6 +22,7 @@
 > analyse fiable. Cette décision, prévue comme "à confirmer" dès l'étape 1,
 > s'appuie maintenant sur des chiffres réels plutôt qu'une estimation.
 
+
 ## Étape 2 — Cas d'usage et KPI
 
 | Cas d'usage | KPI | Données nécessaires | Fréquence |
