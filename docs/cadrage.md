@@ -97,3 +97,8 @@ Voir `src/collect.py` et `data/raw/`. Premier fichier brut obtenu :
 `amr_resistance_20260924T091940Z.csv` (2 459 135 octets, 11 877 lignes),
 collecté le 24/09/2026 via le collecteur configurable, sans intervention
 manuelle sur le contenu.
+
+**Note (séance 2, profilage) :** la colonne source `N_tested` est vide à 100%
+sur l'ensemble du fichier. Le nombre réel de souches testées est contenu dans
+la colonne `N`. Le mapping vers notre champ `n_tested` a été corrigé en
+conséquence.
