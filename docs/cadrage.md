@@ -12,6 +12,16 @@
 | Périmètre | Inclus : pays UE/EEE couverts par EARS-Net/ESAC-Net, bactéries/antibiotiques du panel de surveillance, 1998-2019. Liste précise des pays à confirmer par profilage réel (séance 2). Exclu : données patients individuelles, santé animale, hors Europe, temps réel |
 | Fréquence utile | Annuelle |
 
+> **Mise à jour (séance 2, après profilage) :** le périmètre pays est
+> maintenant confirmé par les vrais volumes de données. Les 15 pays retenus
+> sont ceux avec le plus de lignes et une couverture continue 1999/2001-2019 :
+> France, Netherlands, Greece, Hungary, Spain, Czech Republic, Austria,
+> Belgium, Germany, Slovenia, Italy, Portugal, Croatia, Slovakia,
+> United Kingdom. Les 14 pays restants (ex. Luxembourg avec seulement
+> 12 lignes, Romania avec 57) sont exclus car trop peu représentés pour une
+> analyse fiable. Cette décision, prévue comme "à confirmer" dès l'étape 1,
+> s'appuie maintenant sur des chiffres réels plutôt qu'une estimation.
+
 ## Étape 2 — Cas d'usage et KPI
 
 | Cas d'usage | KPI | Données nécessaires | Fréquence |
