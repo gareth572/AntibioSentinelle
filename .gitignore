@@ -18,8 +18,6 @@ env/
 data/raw/*
 !data/raw/amr_resistance_20260924T091940Z.csv
 
-data/curated/*
-!data/curated/resistance_curated_20261002T090242Z.csv
-
-data/rejected/*
-!data/rejected/resistance_rejected_20261002T090242Z.csv
+# Fichiers curated/rejected horodates : on garde uniquement le fichier consolide dedupliqué
+data/curated/resistance_curated_2*.csv
+data/rejected/resistance_rejected_2*.csv

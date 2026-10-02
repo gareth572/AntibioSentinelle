@@ -103,3 +103,18 @@ rejected.to_csv(rejected_path, index=False)
 
 print(f"\nFichier curated ecrit : {accepted_path} ({len(accepted)} lignes)")
 print(f"Fichier rejected ecrit : {rejected_path} ({len(rejected)} lignes)")
+
+# fichier curated consolide, dedupliqué sur la cle primaire (idempotence)
+CONSOLIDATED_PATH = CURATED_DIR / "resistance_curated_consolidated.csv"
+CLE_PRIMAIRE = ["Year", "Country", "Pathogen", "Antibiotic", "patientType"]
+
+if CONSOLIDATED_PATH.exists():
+    existing = pd.read_csv(CONSOLIDATED_PATH)
+    combined = pd.concat([existing, accepted], ignore_index=True)
+else:
+    combined = accepted
+
+combined = combined.drop_duplicates(subset=CLE_PRIMAIRE, keep="last")
+combined.to_csv(CONSOLIDATED_PATH, index=False)
+
+print(f"\nFichier consolide (dedupliqué) : {CONSOLIDATED_PATH} ({len(combined)} lignes)")
