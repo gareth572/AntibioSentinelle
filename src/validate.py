@@ -66,3 +66,40 @@ for nom, fonction in rules.items():
     masks[nom] = mask
     nb_echecs = (~mask).sum()
     print(f"{nom} : {nb_echecs} lignes en echec sur {len(df)}")
+
+# combiner toutes les regles : une ligne est valide seulement si elle passe TOUTES les regles
+mask_global = pd.Series(True, index=df.index)
+for nom, mask in masks.items():
+    mask_global = mask_global & mask
+
+accepted = df[mask_global].copy()
+rejected = df[~mask_global].copy()
+
+print(f"\n--- Resultat final ---")
+print(f"Lignes acceptees : {len(accepted)}")
+print(f"Lignes rejetees : {len(rejected)}")
+
+from datetime import datetime, timezone
+
+CURATED_DIR = Path("data/curated")
+REJECTED_DIR = Path("data/rejected")
+CURATED_DIR.mkdir(parents=True, exist_ok=True)
+REJECTED_DIR.mkdir(parents=True, exist_ok=True)
+
+# ajouter la cause du rejet pour chaque ligne rejetee
+def causes_rejet(row, masks):
+    causes = [nom for nom, mask in masks.items() if not mask.loc[row.name]]
+    return ", ".join(causes)
+
+rejected = rejected.copy()
+rejected["cause_rejet"] = rejected.apply(lambda row: causes_rejet(row, masks), axis=1)
+
+stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+accepted_path = CURATED_DIR / f"resistance_curated_{stamp}.csv"
+rejected_path = REJECTED_DIR / f"resistance_rejected_{stamp}.csv"
+
+accepted.to_csv(accepted_path, index=False)
+rejected.to_csv(rejected_path, index=False)
+
+print(f"\nFichier curated ecrit : {accepted_path} ({len(accepted)} lignes)")
+print(f"Fichier rejected ecrit : {rejected_path} ({len(rejected)} lignes)")

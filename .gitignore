@@ -17,3 +17,9 @@ env/
 # Donnees brutes volumineuses : on garde uniquement un exemple temoin
 data/raw/*
 !data/raw/amr_resistance_20260924T091940Z.csv
+
+data/curated/*
+!data/curated/resistance_curated_20261002T090242Z.csv
+
+data/rejected/*
+!data/rejected/resistance_rejected_20261002T090242Z.csv
