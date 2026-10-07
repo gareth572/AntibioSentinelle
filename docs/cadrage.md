@@ -109,7 +109,18 @@ Voir `src/collect.py` et `data/raw/`. Premier fichier brut obtenu :
 collecté le 24/09/2026 via le collecteur configurable, sans intervention
 manuelle sur le contenu.
 
-**Note (séance 2, profilage) :** la colonne source `N_tested` est vide à 100%
-sur l'ensemble du fichier. Le nombre réel de souches testées est contenu dans
-la colonne `N`. Le mapping vers notre champ `n_tested` a été corrigé en
-conséquence.
+## Journal des décisions révisées
+
+- **Séance 2, profilage** : la colonne source `N_tested` est vide à 100 %.
+  Le nombre réel de souches testées est dans la colonne `N`, le mapping vers
+  notre champ `n_tested` a été corrigé.
+- **Séance 2, profilage** : le périmètre pays, laissé « à confirmer » à
+  l'étape 1, est fixé à 15 pays sur la base des volumes réels de données.
+- **Séance 2, test de rejet** : trois lignes invalides ont été injectées dans
+  une copie du fichier raw (année 1850, taux 1,5, N = 12). Chacune a été
+  rejetée par la règle attendue (`annee_valide`, `taux_valide`,
+  `echantillon_suffisant`), visible dans la colonne `cause_rejet`. La copie
+  a ensuite été supprimée et le pipeline relancé sur la source propre.
+- **Séance 2, test d'échec de la source** : une URL volontairement erronée a
+  révélé un bug dans `collect.py` (`files=` au lieu de `file=`), corrigé.
+  Le pipeline s'arrête bien quand la collecte échoue.
