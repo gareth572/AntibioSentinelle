@@ -1,0 +1,18 @@
+{
+  "pipeline": "AntibioSentinelle",
+  "executed_at": "2026-10-07T07:30:25Z",
+  "source_file": "amr_resistance_20261002T094515Z.csv",
+  "input_rows": 11876,
+  "accepted_rows": 9425,
+  "rejected_rows": 2451,
+  "duplicates_removed": 9425,
+  "rule_failures": {
+    "completude": 0,
+    "annee_valide": 0,
+    "taux_valide": 0,
+    "echantillon_suffisant": 0,
+    "pays_dans_perimetre": 2451
+  },
+  "quality_status": "PASS_WITH_WARNINGS",
+  "duration_seconds": 0.73
+}

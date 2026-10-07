@@ -1,6 +1,10 @@
 #charger le fichier raw le plus recent
 from pathlib import Path
 import pandas as pd
+import time
+import json
+
+start=time.perf_counter() # time.perf_counter() est un chronometre précis
 
 RAW_DIR = Path("data/raw")
 
@@ -114,7 +118,38 @@ if CONSOLIDATED_PATH.exists():
 else:
     combined = accepted
 
+#Compter les doublons supprimés
+rows_before_dedup=len(combined)
 combined = combined.drop_duplicates(subset=CLE_PRIMAIRE, keep="last")
+duplicates_removed=rows_before_dedup-len(combined)
 combined.to_csv(CONSOLIDATED_PATH, index=False)
 
 print(f"\nFichier consolide (dedupliqué) : {CONSOLIDATED_PATH} ({len(combined)} lignes)")
+
+# rapport d'execution
+REPORTS_DIR = Path("reports")
+REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+
+if len(accepted) == 0:
+    quality_status = "FAIL"
+elif len(rejected) > 0:
+    quality_status = "PASS_WITH_WARNINGS"
+else:
+    quality_status = "PASS"
+
+report = {
+    "pipeline": "AntibioSentinelle",
+    "executed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "source_file": latest_raw_file().name,
+    "input_rows": int(len(df)),
+    "accepted_rows": int(len(accepted)),
+    "rejected_rows": int(len(rejected)),
+    "duplicates_removed": int(duplicates_removed),
+    "rule_failures": {nom: int((~mask).sum()) for nom, mask in masks.items()},
+    "quality_status": quality_status,
+    "duration_seconds": round(time.perf_counter() - start, 2),
+}
+
+report_path = REPORTS_DIR / "run_report.json"
+report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+print(f"\nRapport ecrit : {report_path}")
