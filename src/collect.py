@@ -15,7 +15,7 @@ def collect(url: str = DEFAULT_URL) -> Path:
         response = requests.get(url, timeout=30)
         response.raise_for_status()
     except requests.exceptions.RequestException as exc:
-        print(f"Erreur lors de la collecte : {exc}", files=sys.stderr)
+        print(f"Erreur lors de la collecte : {exc}", file=sys.stderr)
         raise
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
