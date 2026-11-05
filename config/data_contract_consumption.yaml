@@ -1,0 +1,75 @@
+dataset: antibiosentinelle_consumption
+version: 1.0
+grain: >
+  une ligne represente la consommation d'antibiotiques (DDD pour 1000
+  habitants) d'un pays, pour une annee, un secteur, une voie d'administration
+  et une classe d'antibiotiques
+owner: "Tchoula Gareth"
+
+source:
+  name: "ECDC (via Zenodo, Emons, Blanquart & Lehtinen, 2024)"
+  url: "https://zenodo.org/records/14224680"
+  file: "summary_AMC_byclass.csv"
+  doi: "10.5281/zenodo.14224680"
+  license: "Zenodo Open Access (a verifier precisement avant depot final)"
+
+fields:
+  year: {type: integer, required: true, minimum: 1997, maximum: 2016}
+  country: {type: string, required: true}
+  sector: {type: string, required: true, allowed: [Community, Hospital Sector, Total Care]}
+  administration_route: {type: string, required: true, allowed: [All, Oral, Parenteral, Inhalation, Rectal, Other, Implant]}
+  antibiotic_class: {type: string, required: true}
+  antibiotic_class_label: {type: string, required: false}
+  ddd: {type: number, required: true, minimum: 0}
+  anomalie_valeur: {type: boolean, required: true}
+
+source_columns:
+  Country: country
+  Year: year
+  Sector: sector
+  Antimicrobial.Type: administration_route
+  Antibiotic_class: antibiotic_class
+  class: antibiotic_class_label
+  DDD: ddd
+  combC: "supprime (colonne technique du producteur)"
+
+primary_key:
+  - country
+  - year
+  - sector
+  - administration_route
+  - antibiotic_class
+
+quality_rules:
+  - year entre 1997 et 2016 (plage observee ; la page Zenodo ne precise pas les annees de la consommation)
+  - country, sector, administration_route et antibiotic_class renseignes
+  - sector et administration_route dans les valeurs connues
+  - ddd renseigne et superieur ou egal a 0 (une consommation negative est impossible : rejet)
+  - la cle primaire ne doit pas etre dupliquee
+
+perimeter:
+  countries: [France, Netherlands, Greece, Hungary, Spain, Czech Republic, Austria, Belgium, Germany, Slovenia, Italy, Portugal, Croatia, Slovakia, United Kingdom]
+  note: "les autres pays sont valides mais ecartes (data/out_of_scope), comme pour la source A"
+
+flags:
+  anomalie_valeur: >
+    serie (country, class, sector, route) d'au moins 5 points avec ddd > 0,
+    mediane >= 0.5 et ddd > 5 x mediane. Signale, exclu des KPI, non rejete.
+
+kpi_scope:
+  sector: Community
+  years: "1999-2016 (recouvrement avec la source A)"
+  join_classes: [J01A, J01C, J01D, J01F, J01G, J01M, J01X]
+
+known_issues:
+  - "Le sens de la voie 'All' n'est pas documente par la page Zenodo. Regle provisoire : ne pas additionner All et les voies ; groupes ambigus (All > 0 et voies > 0) exclus des KPI."
+  - "Le secteur 'Total Care' n'est pas documente par la page Zenodo."
+  - "La resistance (source A) provient de patients hospitalises (INPAT) ; la consommation retenue est celle de la ville (Community). Le KPI 3 est une comparaison descriptive, pas une preuve d'effet."
+  - "Le secteur hospitalier est absent pour l'Autriche, la Tchequie, l'Allemagne et l'Espagne, et intermittent ailleurs."
+  - "Italie 2007 : valeurs environ 6 fois superieures aux annees voisines, cause inconnue."
+  - "La regle anomalie_valeur ne voit pas les petites series ni les classes de faible mediane."
+
+frequency: annuelle
+freshness: instantane fige 1997-2016, aucune mise a jour attendue
+evolution_policy: toute modification de champ incremente la version
+output_file: data/curated/consumption_curated_final.csv
