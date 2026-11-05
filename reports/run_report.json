@@ -1,18 +1,18 @@
 {
   "pipeline": "AntibioSentinelle",
-  "executed_at": "2026-11-05T09:36:18Z",
-  "source_file": "amr_resistance_20261105T093616Z.csv",
+  "executed_at": "2026-11-05T10:40:28Z",
+  "source_file": "amr_resistance_20261105T104026Z.csv",
   "input_rows": 11876,
   "accepted_rows": 9425,
-  "rejected_rows": 2451,
+  "invalid_rows": 0,
+  "out_of_scope_rows": 2451,
   "duplicates_removed": 9425,
   "rule_failures": {
     "completude": 0,
     "annee_valide": 0,
     "taux_valide": 0,
-    "echantillon_suffisant": 0,
-    "pays_dans_perimetre": 2451
+    "echantillon_suffisant": 0
   },
-  "quality_status": "PASS_WITH_WARNINGS",
-  "duration_seconds": 0.69
+  "quality_status": "PASS",
+  "duration_seconds": 0.5
 }
