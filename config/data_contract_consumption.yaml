@@ -68,6 +68,7 @@ known_issues:
   - "Le secteur hospitalier est absent pour l'Autriche, la Tchequie, l'Allemagne et l'Espagne, et intermittent ailleurs."
   - "Italie 2007 : valeurs environ 6 fois superieures aux annees voisines, cause inconnue."
   - "La regle anomalie_valeur ne voit pas les petites series ni les classes de faible mediane."
+  - "Le signalement anomalie_valeur n'a pas detecte l'hopital italien de 2007 (non verifie) : une analyse hospitaliere heriterait de cette anomalie sans avertissement."
 
 frequency: annuelle
 freshness: instantane fige 1997-2016, aucune mise a jour attendue

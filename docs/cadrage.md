@@ -126,12 +126,11 @@ Clé métier : `(year, country, pathogen, antibiotic, patient_type)`
 Ordre d'implémentation retenu : pipeline A (résistance) complet de bout en
 bout d'abord, jointure avec B ensuite si le temps le permet.
 
-> **État d'avancement (5 novembre 2026) :** réalisés : pipeline A complet
-> (collecte, validation, transformation, rapport), collecte et profilage de B.
-> Non réalisés : validation et transformation de B, jointure, restitution des
-> KPI. Le diagramme `docs/architecture.png` montre donc l'architecture visée,
-> pas l'état actuel. La validation A produit aujourd'hui trois sorties
-> (acceptées, invalides, hors périmètre) et non deux.
+> **État d'avancement (5 novembre 2026) :** réalisés pour les deux sources :
+> collecte, validation (trois sorties : acceptées, invalides, hors périmètre),
+> transformation, rapport, pipeline en six étapes. Non réalisés : la jointure
+> et la restitution des KPI. Le diagramme `docs/architecture.png` montre
+> l'architecture visée, pas l'état actuel.
 
 ## Étape 6 — Contrat de données
 
@@ -188,3 +187,8 @@ sans intervention manuelle sur le contenu.
 - **Séance 2 (reprise), documentation** : le nombre de lignes du premier fichier
   brut était annoncé à 11 877, en-tête compris ; il y a 11 876 lignes de données.
   Corrigé à l'étape 7.
+- **Séance 2 (reprise), source B réalisée** : `validate_amc.py` (6 règles, 2 lignes
+  invalides : les deux `DDD` négatives, causes correctes) et `transform_amc.py`
+  (0 désaccord classe/libellé, 6 valeurs signalées, toutes Italie 2007) sont intégrés
+  au pipeline, qui s'exécute en six étapes sans erreur. Idempotence vérifiée sur
+  les deux sources.
