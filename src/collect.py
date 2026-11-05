@@ -4,12 +4,19 @@ import sys
 import time
 import requests
 
-# l'url de ma source
-DEFAULT_URL = "https://zenodo.org/records/14224680/files/summary_AMR_filtered.csv?download=1"
+BASE_URL = "https://zenodo.org/records/14224680/files"
+
+# nom court -> (fichier source, prefixe du fichier raw)
+SOURCES = {
+    "amr": ("summary_AMR_filtered.csv", "amr_resistance"),
+    "amc": ("summary_AMC_byclass.csv", "amc_consumption"),
+}
 RAW_DIR = Path("data/raw")
 
 
-def collect(url: str = DEFAULT_URL) -> Path:
+def collect(source: str = "amr", url: str | None = None) -> Path:
+    filename, prefix = SOURCES[source]
+    url = url or f"{BASE_URL}/{filename}?download=1"
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
     last_error = None
@@ -27,14 +34,16 @@ def collect(url: str = DEFAULT_URL) -> Path:
         raise last_error
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    output = RAW_DIR / f"amr_resistance_{stamp}.csv"
+    output = RAW_DIR / f"{prefix}_{stamp}.csv"
     output.write_bytes(response.content)
 
     print(f"Collecte reussie : {output} ({len(response.content)} octets)")
     return output
 
 
-# le point d'entree
 if __name__ == "__main__":
-    target_url = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_URL
-    collect(target_url)
+    arg = sys.argv[1] if len(sys.argv) > 1 else "amr"
+    if arg in SOURCES:
+        collect(arg)
+    else:
+        collect("amr", url=arg)  # compatibilite : une URL passee en argument
