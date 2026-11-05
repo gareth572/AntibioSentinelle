@@ -134,3 +134,8 @@ manuelle sur le contenu.
 - **Incident réel, timeout de Zenodo (5 novembre)** : `pipeline.py` s'est arrêté
   sur un `Read timed out` après 30 s. `collect.py` fait désormais 3 tentatives
   (timeout 60 s, attente de 5 s, 10 s puis 15 s). Le cas où les 3 tentatives échouent a été testé avec une URL erronée : 3 tentatives, puis arrêt du pipeline.
+- **Séance 2 (reprise), périmètre et rejets** : les 2 451 lignes des pays non
+  retenus étaient comptées comme rejets, ce qui donnait `PASS_WITH_WARNINGS`
+  sans défaut de qualité. `validate.py` sépare maintenant invalides,
+  hors périmètre et acceptées ; le statut ne dépend que des invalides.
+  Test rejoué avec 3 lignes piégées : 3 invalides, causes correctes.
