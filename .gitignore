@@ -21,3 +21,6 @@ data/raw/*
 # Fichiers curated/rejected horodates : on garde uniquement le fichier consolide dedupliqué
 data/curated/resistance_curated_2*.csv
 data/rejected/resistance_rejected_2*.csv
+
+# Lignes valides hors perimetre pays : fichiers horodates, non versionnes
+data/out_of_scope/*

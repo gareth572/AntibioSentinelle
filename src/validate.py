@@ -1,114 +1,127 @@
-#charger le fichier raw le plus recent
+# charger le fichier raw le plus recent
+from datetime import datetime, timezone
 from pathlib import Path
-import pandas as pd
-import time
 import json
+import time
 
-start=time.perf_counter() # time.perf_counter() est un chronometre précis
+import pandas as pd
+
+start = time.perf_counter()  # chronometre precis
 
 RAW_DIR = Path("data/raw")
+CURATED_DIR = Path("data/curated")
+REJECTED_DIR = Path("data/rejected")
+OUT_OF_SCOPE_DIR = Path("data/out_of_scope")
+REPORTS_DIR = Path("reports")
+for d in (CURATED_DIR, REJECTED_DIR, OUT_OF_SCOPE_DIR, REPORTS_DIR):
+    d.mkdir(parents=True, exist_ok=True)
+
 
 def latest_raw_file() -> Path:
-    files = sorted(RAW_DIR.glob("amr_resistance_*.csv")) 
+    files = sorted(RAW_DIR.glob("amr_resistance_*.csv"))
     if not files:
-        raise FileNotFoundError("Aucun fichier raw trouvé. Lancez d'abord collect.py")
+        raise FileNotFoundError("Aucun fichier raw trouve. Lancez d'abord collect.py")
     return files[-1]
 
-df=pd.read_csv(latest_raw_file())
-print(f"Fichier charge : {latest_raw_file().name} ({len(df)} lignes)")
 
-# Les 5 regles de validation
+raw_file = latest_raw_file()
+df = pd.read_csv(raw_file)
+print(f"Fichier charge : {raw_file.name} ({len(df)} lignes)")
+
+# perimetre : pays retenus apres profilage
 PAYS_RETENUS = [
     "France", "Netherlands", "Greece", "Hungary", "Spain", "Czech Republic",
     "Austria", "Belgium", "Germany", "Slovenia", "Italy", "Portugal",
     "Croatia", "Slovakia", "United Kingdom",
 ]
 
+
+# ---- regles de QUALITE : un echec = ligne invalide ----
+
 # est-ce que pays/bacterie/antibiotique sont bien remplis ?
 def regle_completude(df):
-    """Les champs cles ne doivent pas etre vides."""
-    mask = df["Country"].notna() & df["Pathogen"].notna() & df["Antibiotic"].notna()
-    return mask
+    return df["Country"].notna() & df["Pathogen"].notna() & df["Antibiotic"].notna()
+
 
 # est-ce que l'annee est comprise entre 1998 et 2019 ?
 def regle_annee_valide(df):
-    """L'annee doit etre comprise entre 1998 et 2019."""
-    mask = df["Year"].between(1998, 2019)
-    return mask
+    return df["Year"].between(1998, 2019)
+
 
 # est-ce que le taux de resistance est compris entre 0 et 1 ?
 def regle_taux_valide(df):
-    """Le taux de resistance doit etre compris entre 0 et 1."""
-    mask = df["p"].between(0, 1)
-    return mask
+    return df["p"].between(0, 1)
 
-# est-ce que le nombre de souches testees est suffisant (au moins 30 souches) ?
+
+# est-ce que le nombre de souches testees est suffisant (au moins 30) ?
 def regle_echantillon_suffisant(df):
-    """Le nombre de souches testees (N) doit etre au moins 30 pour etre fiable."""
-    mask = df["N"] >= 30
-    return mask
+    return df["N"] >= 30
+
+
+# ---- filtre de PERIMETRE : un echec = ligne valide mais hors perimetre ----
 
 # est-ce que le pays est dans la liste des pays retenus ?
-def regle_pays_dans_perimetre(df):
-    """Le pays doit etre dans la liste des pays retenus."""
-    mask = df["Country"].isin(PAYS_RETENUS)
-    return mask
+def filtre_pays_dans_perimetre(df):
+    return df["Country"].isin(PAYS_RETENUS)
 
-# appliquer les règles et afficher un résumé
+
 rules = {
     "completude": regle_completude,
     "annee_valide": regle_annee_valide,
     "taux_valide": regle_taux_valide,
     "echantillon_suffisant": regle_echantillon_suffisant,
-    "pays_dans_perimetre": regle_pays_dans_perimetre,
 }
 
-print("\n--- Resultat de chaque regle ---")
+print("\n--- Resultat de chaque regle de qualite ---")
 masks = {}
 for nom, fonction in rules.items():
     mask = fonction(df)
     masks[nom] = mask
-    nb_echecs = (~mask).sum()
-    print(f"{nom} : {nb_echecs} lignes en echec sur {len(df)}")
+    print(f"{nom} : {(~mask).sum()} lignes en echec sur {len(df)}")
 
-# combiner toutes les regles : une ligne est valide seulement si elle passe TOUTES les regles
-mask_global = pd.Series(True, index=df.index)
-for nom, mask in masks.items():
-    mask_global = mask_global & mask
+# une ligne est valide seulement si elle passe TOUTES les regles de qualite
+mask_valide = pd.Series(True, index=df.index)
+for mask in masks.values():
+    mask_valide = mask_valide & mask
 
-accepted = df[mask_global].copy()
-rejected = df[~mask_global].copy()
+mask_perimetre = filtre_pays_dans_perimetre(df)
 
-print(f"\n--- Resultat final ---")
+# trois tas qui ne se chevauchent pas
+invalid = df[~mask_valide].copy()
+out_of_scope = df[mask_valide & ~mask_perimetre].copy()
+accepted = df[mask_valide & mask_perimetre].copy()
+
+print("\n--- Resultat final ---")
 print(f"Lignes acceptees : {len(accepted)}")
-print(f"Lignes rejetees : {len(rejected)}")
+print(f"Lignes invalides : {len(invalid)}")
+print(f"Lignes hors perimetre : {len(out_of_scope)}")
 
-from datetime import datetime, timezone
 
-CURATED_DIR = Path("data/curated")
-REJECTED_DIR = Path("data/rejected")
-CURATED_DIR.mkdir(parents=True, exist_ok=True)
-REJECTED_DIR.mkdir(parents=True, exist_ok=True)
-
-# ajouter la cause du rejet pour chaque ligne rejetee
+# cause du rejet pour chaque ligne invalide
 def causes_rejet(row, masks):
     causes = [nom for nom, mask in masks.items() if not mask.loc[row.name]]
     return ", ".join(causes)
 
-rejected = rejected.copy()
-rejected["cause_rejet"] = rejected.apply(lambda row: causes_rejet(row, masks), axis=1)
+
+if len(invalid) > 0:
+    invalid["cause_rejet"] = invalid.apply(lambda row: causes_rejet(row, masks), axis=1)
+else:
+    invalid["cause_rejet"] = pd.Series(dtype="object")
 
 stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 accepted_path = CURATED_DIR / f"resistance_curated_{stamp}.csv"
 rejected_path = REJECTED_DIR / f"resistance_rejected_{stamp}.csv"
+out_of_scope_path = OUT_OF_SCOPE_DIR / f"resistance_out_of_scope_{stamp}.csv"
 
 accepted.to_csv(accepted_path, index=False)
-rejected.to_csv(rejected_path, index=False)
+invalid.to_csv(rejected_path, index=False)
+out_of_scope.to_csv(out_of_scope_path, index=False)
 
 print(f"\nFichier curated ecrit : {accepted_path} ({len(accepted)} lignes)")
-print(f"Fichier rejected ecrit : {rejected_path} ({len(rejected)} lignes)")
+print(f"Fichier rejected ecrit : {rejected_path} ({len(invalid)} lignes)")
+print(f"Fichier hors perimetre ecrit : {out_of_scope_path} ({len(out_of_scope)} lignes)")
 
-# fichier curated consolide, dedupliqué sur la cle primaire (idempotence)
+# fichier curated consolide, deduplique sur la cle primaire (idempotence)
 CONSOLIDATED_PATH = CURATED_DIR / "resistance_curated_consolidated.csv"
 CLE_PRIMAIRE = ["Year", "Country", "Pathogen", "Antibiotic", "patientType"]
 
@@ -118,21 +131,17 @@ if CONSOLIDATED_PATH.exists():
 else:
     combined = accepted
 
-#Compter les doublons supprimés
-rows_before_dedup=len(combined)
+rows_before_dedup = len(combined)
 combined = combined.drop_duplicates(subset=CLE_PRIMAIRE, keep="last")
-duplicates_removed=rows_before_dedup-len(combined)
+duplicates_removed = rows_before_dedup - len(combined)
 combined.to_csv(CONSOLIDATED_PATH, index=False)
 
-print(f"\nFichier consolide (dedupliqué) : {CONSOLIDATED_PATH} ({len(combined)} lignes)")
+print(f"\nFichier consolide (deduplique) : {CONSOLIDATED_PATH} ({len(combined)} lignes)")
 
-# rapport d'execution
-REPORTS_DIR = Path("reports")
-REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-
+# rapport d'execution : le statut ne depend que des lignes INVALIDES
 if len(accepted) == 0:
     quality_status = "FAIL"
-elif len(rejected) > 0:
+elif len(invalid) > 0:
     quality_status = "PASS_WITH_WARNINGS"
 else:
     quality_status = "PASS"
@@ -140,10 +149,11 @@ else:
 report = {
     "pipeline": "AntibioSentinelle",
     "executed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-    "source_file": latest_raw_file().name,
+    "source_file": raw_file.name,
     "input_rows": int(len(df)),
     "accepted_rows": int(len(accepted)),
-    "rejected_rows": int(len(rejected)),
+    "invalid_rows": int(len(invalid)),
+    "out_of_scope_rows": int(len(out_of_scope)),
     "duplicates_removed": int(duplicates_removed),
     "rule_failures": {nom: int((~mask).sum()) for nom, mask in masks.items()},
     "quality_status": quality_status,
