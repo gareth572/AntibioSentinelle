@@ -1,0 +1,19 @@
+{
+  "pipeline": "AntibioSentinelle-consumption",
+  "executed_at": "2026-11-05T15:05:00Z",
+  "source_file": "amc_consumption_20261105T150454Z.csv",
+  "input_rows": 14084,
+  "accepted_rows": 7029,
+  "invalid_rows": 2,
+  "out_of_scope_rows": 7053,
+  "rule_failures": {
+    "completude": 0,
+    "annee_valide": 0,
+    "secteur_connu": 0,
+    "voie_connue": 0,
+    "ddd_positif": 2,
+    "cle_unique": 0
+  },
+  "quality_status": "PASS_WITH_WARNINGS",
+  "duration_seconds": 0.17
+}
