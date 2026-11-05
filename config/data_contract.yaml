@@ -1,5 +1,5 @@
 dataset: antibiosentinelle_resistance
-version: 1.0
+version: 1.1
 grain: >
   une ligne represente le taux de resistance observe pour une combinaison
   unique annee, pays, bacterie, antibiotique teste, type de patient,
@@ -12,19 +12,18 @@ source:
   file: "summary_AMR_filtered.csv"
   doi: "10.5281/zenodo.14224680"
 
-  required_fields:
-  - year
-  - country
-  - pathogen
-  - antibiotic
-  - patient_type
-  - resistance_rate
-  - n_tested
-
-optional_fields:
-  - pathogen_long
-  - antibiotic_long
-  - antibiotic_class
+fields:
+  year: {type: integer, required: true}
+  country: {type: string, required: true}
+  pathogen: {type: string, required: true}
+  antibiotic: {type: string, required: true}
+  patient_type: {type: string, required: true}
+  n_tested: {type: integer, required: true, minimum: 30}
+  n_resistant: {type: integer, required: true, minimum: 0}
+  resistance_rate: {type: number, required: true, minimum: 0, maximum: 1}
+  pathogen_long: {type: string, required: false}
+  antibiotic_long: {type: string, required: false}
+  antibiotic_class: {type: string, required: false}
 
 primary_key:
   - year
@@ -41,7 +40,14 @@ quality_rules:
   - resistance_rate doit etre compris entre 0 et 1
   - n_tested doit etre superieur ou egal a 30
   - la cle primaire ne doit pas etre dupliquee
+  - n_resistant doit etre inferieur ou egal a n_tested
+  - resistance_rate doit etre egal a n_resistant / n_tested (tolerance 1e-6)
 
 deduplication_strategy: >
   upsert sur la cle primaire ; la derniere collecte remplace la precedente
   pour une meme cle
+
+frequency: annuelle
+freshness: instantane fige 1998-2019, aucune mise a jour attendue
+evolution_policy: toute modification de champ incremente la version ; 1.1 ajoute n_resistant
+output_file: data/curated/resistance_curated_final.csv
