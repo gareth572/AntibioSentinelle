@@ -27,7 +27,7 @@
 
 | Cas d'usage | KPI | Données nécessaires | Fréquence |
 |---|---|---|---|
-| Comparer le taux de résistance entre pays | Taux de résistance moyen par pays et par bactérie (%) | pays, année, pathogène, antibiotique, % résistant | Annuelle |
+| Comparer le taux de résistance entre pays | Taux de résistance pondéré par pays et par bactérie : somme(n_resistant) / somme(n_tested) | pays, année, pathogène, antibiotique, n_resistant, n_tested | Annuelle |
 | Suivre l'évolution de la consommation | DDD pour 1000 habitants, par pays et par an | pays, année, classe ATC, secteur, DDD | Annuelle |
 | Croiser consommation et résistance | Corrélation consommation ↔ % résistance par pays | pays, année (jointure des deux fichiers) | Annuelle |
 
@@ -124,3 +124,14 @@ manuelle sur le contenu.
 - **Séance 2, test d'échec de la source** : une URL volontairement erronée a
   révélé un bug dans `collect.py` (`files=` au lieu de `file=`), corrigé.
   Le pipeline s'arrête bien quand la collecte échoue.
+- **Séance 2 (reprise), couche curated** : le curated gardait les colonnes brutes
+  du producteur. Ajout de `transform.py` : renommage, typage explicite, retrait de
+  `N_S`, `N_tested`, `test`, `combR` et des intervalles de confiance, ajout de
+  `n_resistant` (contrat 1.0 → 1.1). Contrôle de cohérence
+  `n_resistant / n_tested = resistance_rate` : 0 échec sur 9 425 lignes.
+- **Correction du KPI 1** : la moyenne simple des taux donnait le même poids à 33 et
+  à 5 000 souches. Le KPI devient `somme(n_resistant) / somme(n_tested)`.
+- **Incident réel, timeout de Zenodo (5 novembre)** : `pipeline.py` s'est arrêté
+  sur un `Read timed out` après 30 s. `collect.py` fait désormais 3 tentatives
+  (timeout 60 s, attente de 5 s puis 10 s). Le cas où les 3 tentatives échouent
+  n'a pas encore été testé.
