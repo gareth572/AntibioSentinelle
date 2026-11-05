@@ -133,5 +133,4 @@ manuelle sur le contenu.
   à 5 000 souches. Le KPI devient `somme(n_resistant) / somme(n_tested)`.
 - **Incident réel, timeout de Zenodo (5 novembre)** : `pipeline.py` s'est arrêté
   sur un `Read timed out` après 30 s. `collect.py` fait désormais 3 tentatives
-  (timeout 60 s, attente de 5 s puis 10 s). Le cas où les 3 tentatives échouent
-  n'a pas encore été testé.
+  (timeout 60 s, attente de 5 s, 10 s puis 15 s). Le cas où les 3 tentatives échouent a été testé avec une URL erronée : 3 tentatives, puis arrêt du pipeline.
