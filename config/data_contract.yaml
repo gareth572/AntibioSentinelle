@@ -4,7 +4,7 @@ grain: >
   une ligne represente le taux de resistance observe pour une combinaison
   unique annee, pays, bacterie, antibiotique teste, type de patient,
   en Europe entre 1998 et 2019
-owner: "[Tchoula Gareth]"
+owner: "Tchoula Gareth"
 
 source:
   name: "ECDC / TESSy (via Zenodo, Emons, Blanquart & Lehtinen, 2024)"
