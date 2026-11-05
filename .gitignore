@@ -24,3 +24,7 @@ data/rejected/resistance_rejected_2*.csv
 
 # Lignes valides hors perimetre pays : fichiers horodates, non versionnes
 data/out_of_scope/*
+
+# Source B : fichiers horodates, non versionnes
+data/curated/consumption_curated_2*.csv
+data/rejected/consumption_rejected_2*.csv
