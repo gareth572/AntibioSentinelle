@@ -11,3 +11,9 @@ if __name__ == "__main__":
     run_step("src/collect.py")
     run_step("src/validate.py")
     print("\nPipeline termine avec succes.")
+
+if __name__ == "__main__":
+    run_step("src/collect.py")
+    run_step("src/validate.py")
+    run_step("src/transform.py")
+    print("\nPipeline termine avec succes.")
