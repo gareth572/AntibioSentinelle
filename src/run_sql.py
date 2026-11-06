@@ -13,7 +13,9 @@ def main(fichier: str, nb_lignes: int = 10) -> None:
         print(f"\n=== Requete {i} ===")
         cur = conn.execute(requete)
         print([c[0] for c in cur.description])
-        for ligne in cur.fetchmany(nb_lignes):
+        lignes = cur.fetchall()
+        print(f"{len(lignes)} lignes")
+        for ligne in lignes[:nb_lignes]:
             print(ligne)
 
 if __name__ == "__main__":
