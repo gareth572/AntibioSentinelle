@@ -233,3 +233,47 @@ JOIN (
 ) r ON r.id_pays = k.id_pays AND r.annee = k.annee
 JOIN pays p ON p.id_pays = k.id_pays
 ORDER BY p.nom, k.annee;
+
+-- Requete 7 - Controle qualite : valeurs de consommation signalees (anomalie_valeur = 1)
+-- Liste les 6 valeurs de l'Italie 2007 pour verifier que le signalement du curated arrive bien en base
+SELECT
+    p.nom       AS pays,
+    c.annee,
+    cl.code_atc AS classe,
+    s.nom       AS secteur,
+    v.nom       AS voie,
+    c.ddd
+FROM consommation c
+JOIN pays    p  ON p.id_pays = c.id_pays
+JOIN classe  cl ON cl.id_classe = c.id_classe
+JOIN secteur s  ON s.id_secteur = c.id_secteur
+JOIN voie    v  ON v.id_voie = c.id_voie
+WHERE c.anomalie_valeur = 1
+ORDER BY p.nom, c.annee, cl.code_atc, s.nom, v.nom;
+
+-- Requete 8 - Couverture : nombre d'annees et de souches testees par pays (resistance)
+-- Montre les couvertures inegales entre pays, limite a connaitre avant toute comparaison
+SELECT
+    p.nom                       AS pays,
+    COUNT(DISTINCT r.annee)     AS nb_annees,
+    MIN(r.annee)                AS premiere_annee,
+    MAX(r.annee)                AS derniere_annee,
+    COUNT(*)                    AS nb_resultats,
+    SUM(r.n_tested)             AS n_tested_total
+FROM resultat_resistance r
+JOIN pays p ON p.id_pays = r.id_pays
+GROUP BY p.nom
+ORDER BY n_tested_total DESC;
+
+-- Requete 9 - Controle de jointure : classes de consommation sans aucun antibiotique de resistance
+-- LEFT JOIN qui retrouve les classes presentes seulement cote consommation, ce qui justifie la cardinalite 0,n
+SELECT
+    cl.code_atc AS classe,
+    cl.libelle,
+    COUNT(DISTINCT c.id_conso) AS nb_lignes_consommation
+FROM classe cl
+JOIN consommation c       ON c.id_classe = cl.id_classe
+LEFT JOIN antibiotique ab ON ab.id_classe = cl.id_classe
+WHERE ab.id_antibiotique IS NULL
+GROUP BY cl.code_atc, cl.libelle
+ORDER BY cl.code_atc;
