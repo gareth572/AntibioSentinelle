@@ -71,3 +71,6 @@ CREATE TABLE consommation (
 
 -- index de jointure : classe d'un antibiotique (jointure resistance / consommation)
 CREATE INDEX idx_antibiotique_classe ON antibiotique(id_classe);
+
+-- index de filtre : resistance par bacterie et antibiotique, hors pays (requete 6)
+CREATE INDEX idx_resultat_bacterie_antibiotique ON resultat_resistance(id_bacterie, id_antibiotique);
