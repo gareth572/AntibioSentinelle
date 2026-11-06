@@ -43,6 +43,14 @@
 >   « résistantes ou intermédiaires ». Le nom du champ `n_resistant` (issu de
 >   `N_I_R`) est donc trompeur ; son renommage est une décision en attente.
 
+> **Mise à jour (6 novembre, après SQLite) :** le KPI 3 est calculé en SQL comme
+> une comparaison descriptive entre le DDD du secteur Community et le taux de
+> résistance pondéré, sur pays, année et classe (1 133 lignes), puis sur les
+> quinolones et ESCCOL à CIP (199 lignes). Aucun coefficient de corrélation n'est
+> calculé, et la résistance (hôpital) et la consommation (ville) ne sont pas
+> comparables au point de conclure à un effet. Le KPI 2 porte sur le secteur
+> Community, classes J01, avec la règle sur la voie `All` décrite dans le journal.
+
 ## Étape 3 — Sources
 
 | Critère | Source A — résistance | Source B — consommation |
@@ -132,6 +140,14 @@ bout d'abord, jointure avec B ensuite si le temps le permet.
 > et la restitution des KPI. Le diagramme `docs/architecture.png` montre
 > l'architecture visée, pas l'état actuel.
 
+> **État d'avancement (6 novembre 2026) :** le pipeline compte sept étapes : le
+> chargement SQLite (`load_sqlite.py`) s'ajoute après les deux transformations.
+> La jointure et les trois KPI sont réalisés en SQL (`sql/queries.sql`), à la
+> demande, et non dans un fichier « curated finale » : le pipeline Python ne les
+> produit pas. Il n'y a pas d'application de restitution. Le diagramme
+> `docs/architecture.png` montre toujours l'architecture visée en séance 1, pas
+> l'état actuel.
+
 ## Étape 6 — Contrat de données
 
 Source A : voir `config/data_contract.yaml` (version 1.1).
@@ -189,6 +205,29 @@ sans intervention manuelle sur le contenu.
   Corrigé à l'étape 7.
 - **Séance 2 (reprise), source B réalisée** : `validate_amc.py` (6 règles, 2 lignes
   invalides : les deux `DDD` négatives, causes correctes) et `transform_amc.py`
-  (0 désaccord classe/libellé, 6 valeurs signalées, toutes Italie 2007) sont intégrés
-  au pipeline, qui s'exécute en six étapes sans erreur. Idempotence vérifiée sur
-  les deux sources.
+  (0 désaccord classe/libellé, 6 valeurs signalées, toutes Italie 2007) sont intégrés au pipeline, qui s'exécute en six étapes sans erreur. Idempotence vérifiée sur les deux sources.
+- **SQLite, modèle (6 novembre)** : huit tables, six dimensions (pays, bacterie,
+  classe, antibiotique, secteur, voie) et deux mesures (resultat_resistance,
+  consommation) sans lien direct, rapprochées sur pays, année et classe. La cardinalité classe-antibiotique est 0,n : cinq classes n'existent que côté
+  consommation. Les CHECK reprennent les bornes des règles de qualité, les clés
+  étrangères sont en ON DELETE RESTRICT.
+- **Voie `All` (6 novembre)** : sur 2 714 groupes (pays, année, classe) du secteur
+  Community, 892 n'ont que `All`, 1 672 n'ont pas `All` et 150 ont `All` et
+  d'autres voies. Test : dans ces 150 groupes, `All` n'égale la somme des autres
+  voies que 7 fois (100 inférieure, 33 supérieure, 10 somme nulle), donc `All`
+  n'est pas un total. Règle retenue pour le KPI 2 : `All` seule, on la prend ;
+  pas de `All`, on additionne les voies ; groupes mixtes exclus. L'additivité des
+  voies reste une hypothèse non testée.
+- **KPI 2 limité aux classes J01 (6 novembre)** : A07A (anti-infectieux
+  intestinaux) et P01A (antiprotozoaires) ne relèvent pas du groupe J01
+  (antibactériens à usage systémique) et sont écartées du KPI. Les 145 groupes
+  mixtes J01 (sur 2 470) sont exclus.
+- **KPI 3, effet de composition (6 novembre)** : au niveau de la classe, le taux
+  mélange les bactéries et antibiotiques testés l'année donnée ; son évolution
+  peut venir du panel. Le croisement ciblé (J01M, ESCCOL à CIP) est la lecture
+  retenue.
+- **Index (6 novembre)** : idx_resultat_bacterie_antibiotique ajouté ; le filtre
+  sur la bactérie et l'antibiotique passe de SCAN à SEARCH dans EXPLAIN QUERY
+  PLAN. Aucun gain de temps n'est annoncé : 9 425 lignes ne le permettent pas.
+- **Pipeline à sept étapes (6 novembre)** : load_sqlite.py recrée la base à chaque
+  exécution (suppression du fichier) plutôt que de la mettre à jour : c'est plus simple et la base est entièrement reconstructible à partir des deux fichiers finaux.
