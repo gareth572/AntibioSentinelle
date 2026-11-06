@@ -151,7 +151,7 @@ bout d'abord, jointure avec B ensuite si le temps le permet.
 ## Étape 6 — Contrat de données
 
 Source A : voir `config/data_contract.yaml` (version 1.1).
-Source B : voir `config/data_contract_consumption.yaml` (version 1.0).
+Source B : voir `config/data_contract_consumption.yaml` (version 1.1).
 
 ## Étape 7 — Première collecte brute
 
@@ -231,3 +231,7 @@ sans intervention manuelle sur le contenu.
   PLAN. Aucun gain de temps n'est annoncé : 9 425 lignes ne le permettent pas.
 - **Pipeline à sept étapes (6 novembre)** : load_sqlite.py recrée la base à chaque
   exécution (suppression du fichier) plutôt que de la mettre à jour : c'est plus simple et la base est entièrement reconstructible à partir des deux fichiers finaux.
+- **Contrat B en version 1.1 (6 novembre)** : ajout du test sur `All`, de la règle
+  de calcul du KPI 2, du périmètre J01 et de trois limites ; la description de
+  `anomalie_valeur` est corrigée : ces valeurs ne sont pas exclues des KPI, les
+  requêtes SQL actuelles les conservent. 

@@ -1,5 +1,9 @@
 dataset: antibiosentinelle_consumption
-version: 1.0
+version: 1.1
+changelog:
+  - "1.1 (6 novembre) : regle de la voie All testee et appliquee en SQL, perimetre du KPI 2 (classes J01), limites ajoutees, description de anomalie_valeur corrigee. Aucun champ modifie."
+  - "1.0 (5 novembre) : version initiale apres profilage, validate_amc.py et transform_amc.py."
+
 grain: >
   une ligne represente la consommation d'antibiotiques (DDD pour 1000
   habitants) d'un pays, pour une annee, un secteur, une voie d'administration
@@ -54,21 +58,34 @@ perimeter:
 flags:
   anomalie_valeur: >
     serie (country, class, sector, route) d'au moins 5 points avec ddd > 0,
-    mediane >= 0.5 et ddd > 5 x mediane. Signale, exclu des KPI, non rejete.
+    mediane >= 0.5 et ddd > 5 x mediane. Signale et non rejete. Les requetes
+    SQL actuelles ne l'excluent pas des KPI : les 6 valeurs de l'Italie 2007
+    (Community) entrent dans le KPI 2 et dans le KPI 3.
 
 kpi_scope:
   sector: Community
   years: "1999-2016 (recouvrement avec la source A)"
+  kpi2_classes: "J01* (10 classes ; A07A et P01A exclues)"
   join_classes: [J01A, J01C, J01D, J01F, J01G, J01M, J01X]
 
+kpi_rules:
+  administration_route: >
+    Par (country, year, class) dans le secteur Community : si All est la seule
+    voie, on retient All ; si All est absente, on additionne les voies ; si All
+    coexiste avec d'autres voies, le groupe est exclu du KPI 2.
+  test_all: "Dans les 150 groupes avec All et d'autres voies, All egale la somme des autres voies (a 5 pour cent pres) dans 7 cas, est inferieure dans 100, superieure dans 33 ; somme nulle dans 10."
+  applied_in: "sql/queries.sql (requetes etiquetees 4, 5 et 6), pas dans le pipeline Python"
+
 known_issues:
-  - "Le sens de la voie 'All' n'est pas documente par la page Zenodo. Regle provisoire : ne pas additionner All et les voies ; groupes ambigus (All > 0 et voies > 0) exclus des KPI."
+  - "Le sens de la voie 'All' n'est pas documente par la page Zenodo, et le test montre qu'elle n'est pas un total des autres voies (voir kpi_rules). Comparer un pays qui ne declare que All a un pays qui declare des voies separees n'est pas garanti equivalent. L'additivite des voies, utilisee quand All est absente, n'est pas testee."
   - "Le secteur 'Total Care' n'est pas documente par la page Zenodo."
   - "La resistance (source A) provient de patients hospitalises (INPAT) ; la consommation retenue est celle de la ville (Community). Le KPI 3 est une comparaison descriptive, pas une preuve d'effet."
   - "Le secteur hospitalier est absent pour l'Autriche, la Tchequie, l'Allemagne et l'Espagne, et intermittent ailleurs."
   - "Italie 2007 : valeurs environ 6 fois superieures aux annees voisines, cause inconnue."
   - "La regle anomalie_valeur ne voit pas les petites series ni les classes de faible mediane."
   - "Le signalement anomalie_valeur n'a pas detecte l'hopital italien de 2007 (non verifie) : une analyse hospitaliere heriterait de cette anomalie sans avertissement."
+  - "KPI 3 par classe : le taux melange les bacteries et antibiotiques testes l'annee donnee, son evolution peut venir du panel (effet de composition). Le croisement cible (J01M, ESCCOL, CIP) l'evite."
+  - "La regle sur la voie All est ecrite dans trois requetes SQL : une modification doit etre faite aux trois endroits."
 
 frequency: annuelle
 freshness: instantane fige 1997-2016, aucune mise a jour attendue

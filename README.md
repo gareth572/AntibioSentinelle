@@ -9,7 +9,7 @@ consommation d'antibiotiques (données ECDC/EARS-Net, 1998-2019).
 Séances 1 et 2 terminées pour les deux sources : cadrage, collecte (3
 tentatives), validation, séparation acceptées / invalides / hors périmètre,
 transformation vers un curated typé, idempotence et rapports d'exécution.
-Source A (résistance) : contrat 1.1. Source B (consommation) : contrat 1.0.
+Source A (résistance) : contrat 1.1. Source B (consommation) : contrat 1.1.
 
 Base SQLite terminée : modèle (MCD, MLD), schéma avec contraintes, chargement
 des deux sources, 11 requêtes commentées, index et plan d'exécution. Les trois
@@ -62,7 +62,7 @@ python src\load_sqlite.py
 
 Résultats à utiliser :
 - `data/curated/resistance_curated_final.csv` (contrat `config/data_contract.yaml`, v1.1) ;
-- `data/curated/consumption_curated_final.csv` (contrat `config/data_contract_consumption.yaml`, v1.0) ;
+- `data/curated/consumption_curated_final.csv` (contrat `config/data_contract_consumption.yaml`, v1.1) ;
 - `data/antibiosentinelle.db` (base SQLite, non versionnée, reconstruite à chaque exécution).
 
 Les autres fichiers de `data/curated/` sont des étapes intermédiaires.
@@ -246,7 +246,7 @@ AntibioSentinelle/
   .gitignore
   config/
     data_contract.yaml              contrat A (resistance) v1.1
-    data_contract_consumption.yaml  contrat B (consommation) v1.0
+    data_contract_consumption.yaml  contrat B (consommation) v1.1
   data/
     raw/                      copies brutes horodatees
     curated/                  valides (horodates), consolide A, finals A et B
