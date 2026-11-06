@@ -75,7 +75,8 @@ Fichier secondaire (jointure ultérieure) : `summary_AMC_byclass.csv` (consommat
 > période est 1997-2016, non 1998-2019. Trois points restent non documentés par
 > le producteur : le sens de la voie `All`, le secteur `Total Care` et les années
 > couvertes par la consommation. Règle provisoire : ne pas additionner `All` et
-> les voies. Contrat : `config/data_contract_consumption.yaml`.
+> les voies (remplacée le 6 novembre par la règle du journal « Voie `All` »).
+> Contrat : `config/data_contract_consumption.yaml`.
 
 ## Étape 4 — Grain et schéma
 
@@ -105,6 +106,9 @@ Clé métier : `(year, country, pathogen, antibiotic, patient_type)`
 > population mesurée mais ne distingue aucune ligne.
 
 ## Étape 5 — Architecture
+
+Architecture visée en séance 1 (schéma d'origine : `docs/architecture_v1.png`).
+L'architecture réelle, en sept étapes, est dans `docs/architecture.png`.
 
 ```
 [Source A: Zenodo/ECDC-TESSy]        [Source B: Zenodo/ECDC-TESSy]
@@ -137,16 +141,17 @@ bout d'abord, jointure avec B ensuite si le temps le permet.
 > **État d'avancement (5 novembre 2026) :** réalisés pour les deux sources :
 > collecte, validation (trois sorties : acceptées, invalides, hors périmètre),
 > transformation, rapport, pipeline en six étapes. Non réalisés : la jointure
-> et la restitution des KPI. Le diagramme `docs/architecture.png` montre
-> l'architecture visée, pas l'état actuel.
+> et la restitution des KPI. Le diagramme `docs/architecture_v1.png`
+> montre l'architecture visée, pas l'état actuel.
 
 > **État d'avancement (6 novembre 2026) :** le pipeline compte sept étapes : le
 > chargement SQLite (`load_sqlite.py`) s'ajoute après les deux transformations.
 > La jointure et les trois KPI sont réalisés en SQL (`sql/queries.sql`), à la
 > demande, et non dans un fichier « curated finale » : le pipeline Python ne les
-> produit pas. Il n'y a pas d'application de restitution. Le diagramme
-> `docs/architecture.png` montre toujours l'architecture visée en séance 1, pas
-> l'état actuel.
+> produit pas. Il n'y a pas d'application de restitution.
+> Le diagramme `docs/architecture.png` montre maintenant le pipeline réel
+> en sept étapes. L'ancien schéma de la séance 1 est conservé dans
+> `docs/architecture_v1.png`.
 
 ## Étape 6 — Contrat de données
 
@@ -205,10 +210,13 @@ sans intervention manuelle sur le contenu.
   Corrigé à l'étape 7.
 - **Séance 2 (reprise), source B réalisée** : `validate_amc.py` (6 règles, 2 lignes
   invalides : les deux `DDD` négatives, causes correctes) et `transform_amc.py`
-  (0 désaccord classe/libellé, 6 valeurs signalées, toutes Italie 2007) sont intégrés au pipeline, qui s'exécute en six étapes sans erreur. Idempotence vérifiée sur les deux sources.
+  (0 désaccord classe/libellé, 6 valeurs signalées, toutes Italie 2007) sont
+  intégrés au pipeline, qui s'exécute alors en six étapes sans erreur.
+  Idempotence vérifiée sur les deux sources.
 - **SQLite, modèle (6 novembre)** : huit tables, six dimensions (pays, bacterie,
   classe, antibiotique, secteur, voie) et deux mesures (resultat_resistance,
-  consommation) sans lien direct, rapprochées sur pays, année et classe. La cardinalité classe-antibiotique est 0,n : cinq classes n'existent que côté
+  consommation) sans lien direct, rapprochées sur pays, année et classe. La
+  cardinalité classe-antibiotique est 0,n : cinq classes n'existent que côté
   consommation. Les CHECK reprennent les bornes des règles de qualité, les clés
   étrangères sont en ON DELETE RESTRICT.
 - **Voie `All` (6 novembre)** : sur 2 714 groupes (pays, année, classe) du secteur
@@ -230,8 +238,19 @@ sans intervention manuelle sur le contenu.
   sur la bactérie et l'antibiotique passe de SCAN à SEARCH dans EXPLAIN QUERY
   PLAN. Aucun gain de temps n'est annoncé : 9 425 lignes ne le permettent pas.
 - **Pipeline à sept étapes (6 novembre)** : load_sqlite.py recrée la base à chaque
-  exécution (suppression du fichier) plutôt que de la mettre à jour : c'est plus simple et la base est entièrement reconstructible à partir des deux fichiers finaux.
+  exécution (suppression du fichier) plutôt que de la mettre à jour : c'est plus
+  simple et la base est entièrement reconstructible à partir des deux fichiers
+  finaux.
 - **Contrat B en version 1.1 (6 novembre)** : ajout du test sur `All`, de la règle
   de calcul du KPI 2, du périmètre J01 et de trois limites ; la description de
   `anomalie_valeur` est corrigée : ces valeurs ne sont pas exclues des KPI, les
-  requêtes SQL actuelles les conservent. 
+  requêtes SQL actuelles les conservent.
+- **Schéma d'architecture mis à jour (6 novembre)** : `docs/architecture.png`
+  montre maintenant le pipeline réel en 7 étapes (deux branches qui se
+  rejoignent au chargement SQLite). L'ancien schéma de la séance 1, qui montrait
+  l'architecture visée, est conservé dans `docs/architecture_v1.png`.
+- **Séance 3 (6 novembre)** : grille RGPD (`docs/grille_rgpd.md`) : aucune donnée
+  personnelle dans les sources, seule l'identité de l'auteur figure dans les
+  commits ; ADR 001 (`docs/adr/001-sqlite.md`) : SQLite retenu face à CSV avec
+  pandas, PostgreSQL et DuckDB ; architecture v2 (`docs/architecture_v2.md`) et
+  pitch (`docs/pitch.md`).

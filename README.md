@@ -255,6 +255,7 @@ AntibioSentinelle/
     antibiosentinelle.db      base SQLite (non versionnee)
   docs/
     architecture.png
+    architecture_v1.png
     cadrage.md                cadrage et journal des decisions
     besoin_metier.md          besoin, cardinalites, MLD
     mcd.png                   modele conceptuel

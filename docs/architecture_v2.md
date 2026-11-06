@@ -18,6 +18,9 @@
 - **SQL, pas NoSQL** : les données sont tabulaires, avec des relations claires et des contraintes à faire respecter.
 
 ## DAG du pipeline
+
+![Pipeline](architecture.png)
+
 Source A (résistance) : collect → validate → transform.
 Source B (consommation) : collect → validate_amc → transform_amc.
 Les deux branches sont indépendantes et se rejoignent dans `load_sqlite`, puis viennent les requêtes SQL. Le pipeline les exécute aujourd'hui l'une après l'autre (7 étapes), mais elles pourraient tourner en parallèle.
