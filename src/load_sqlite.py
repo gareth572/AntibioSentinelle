@@ -86,5 +86,7 @@ if __name__ == "__main__":
     charger_resistance(conn, a)
     charger_consommation(conn, b)
     conn.commit()
+    n_r = conn.execute("SELECT COUNT(*) FROM resultat_resistance").fetchone()[0]
+    n_c = conn.execute("SELECT COUNT(*) FROM consommation").fetchone()[0]
     conn.close()
-    print("Dimensions chargees.")
+    print(f"Base chargee : {n_r} resultats de resistance, {n_c} lignes de consommation.")
