@@ -183,3 +183,53 @@ JOIN (
 JOIN pays   p  ON p.id_pays = k.id_pays
 JOIN classe cl ON cl.id_classe = k.id_classe
 ORDER BY p.nom, k.annee, cl.code_atc;
+
+-- Requete 6 - KPI 3 cible : quinolones (J01M), DDD Community et taux de resistance de ESCCOL a CIP par pays et annee
+-- Cas concret du croisement central, descriptif seulement : resistance hospitaliere contre consommation en ville
+SELECT
+    p.nom AS pays,
+    k.annee,
+    ROUND(k.ddd, 4) AS ddd_j01m,
+    r.n_tested,
+    r.n_resistant,
+    ROUND(1.0 * r.n_resistant / r.n_tested, 4) AS taux_resistance_esccol_cip
+FROM (
+    -- DDD J01M en Community, memes regles que la requete 4
+    SELECT
+        g.id_pays, g.annee,
+        CASE
+            WHEN g.a_all > 0 AND g.nb_voies = 1 THEN g.ddd_all
+            WHEN g.a_all = 0 THEN g.ddd_autres
+        END AS ddd
+    FROM (
+        SELECT
+            c.id_pays, c.annee,
+            COUNT(DISTINCT c.id_voie)                    AS nb_voies,
+            SUM(v.nom = 'All')                           AS a_all,
+            SUM(CASE WHEN v.nom = 'All' THEN c.ddd END)  AS ddd_all,
+            SUM(CASE WHEN v.nom <> 'All' THEN c.ddd END) AS ddd_autres
+        FROM consommation c
+        JOIN secteur s  ON s.id_secteur = c.id_secteur
+        JOIN voie    v  ON v.id_voie = c.id_voie
+        JOIN classe  cl ON cl.id_classe = c.id_classe
+        WHERE s.nom = 'Community'
+          AND cl.code_atc = 'J01M'
+        GROUP BY c.id_pays, c.annee
+    ) g
+    WHERE g.a_all = 0 OR g.nb_voies = 1
+) k
+JOIN (
+    -- resistance de ESCCOL a CIP, une ligne par pays et annee
+    SELECT
+        rr.id_pays, rr.annee,
+        SUM(rr.n_tested)    AS n_tested,
+        SUM(rr.n_resistant) AS n_resistant
+    FROM resultat_resistance rr
+    JOIN bacterie     b  ON b.id_bacterie = rr.id_bacterie
+    JOIN antibiotique ab ON ab.id_antibiotique = rr.id_antibiotique
+    WHERE b.code = 'ESCCOL'
+      AND ab.code = 'CIP'
+    GROUP BY rr.id_pays, rr.annee
+) r ON r.id_pays = k.id_pays AND r.annee = k.annee
+JOIN pays p ON p.id_pays = k.id_pays
+ORDER BY p.nom, k.annee;
