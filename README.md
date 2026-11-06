@@ -11,8 +11,12 @@ tentatives), validation, séparation acceptées / invalides / hors périmètre,
 transformation vers un curated typé, idempotence et rapports d'exécution.
 Source A (résistance) : contrat 1.1. Source B (consommation) : contrat 1.0.
 
-Non réalisé : la jointure des deux sources et le calcul des KPI. Voir
-« Limites connues » et `docs/cadrage.md`.
+Base SQLite terminée : modèle (MCD, MLD), schéma avec contraintes, chargement
+des deux sources, 11 requêtes commentées, index et plan d'exécution. Les trois
+KPI sont calculés par des requêtes SQL, à la demande : le pipeline Python ne les
+produit pas.
+
+Voir « Limites connues » et `docs/cadrage.md`.
 
 ## Installation
 
@@ -24,7 +28,7 @@ pip install -r requirements.txt
 
 ## Exécution
 
-Pipeline complet (six étapes) :
+Pipeline complet (sept étapes) :
 
 ```
 python src\pipeline.py
@@ -39,7 +43,9 @@ python src\validate.py
 python src\transform.py
 python src\validate_amc.py
 python src\transform_amc.py
+python src\load_sqlite.py
 ```
+
 
 - `collect.py` récupère une copie brute et horodatée d'un fichier du dépôt
   Zenodo (DOI 10.5281/zenodo.14224680) dans `data/raw/` : `summary_AMR_filtered.csv`
@@ -51,15 +57,19 @@ python src\transform_amc.py
   (`data/out_of_scope/`). Chacun génère un rapport dans `reports/`.
 - `transform.py` et `transform_amc.py` renomment et typent les colonnes,
   contrôlent la cohérence et publient le jeu final.
+- `load_sqlite.py` recrée `data/antibiosentinelle.db` à partir des deux jeux
+  finaux (voir « Base SQLite et requêtes »).
 
 Résultats à utiliser :
 - `data/curated/resistance_curated_final.csv` (contrat `config/data_contract.yaml`, v1.1) ;
-- `data/curated/consumption_curated_final.csv` (contrat `config/data_contract_consumption.yaml`, v1.0).
+- `data/curated/consumption_curated_final.csv` (contrat `config/data_contract_consumption.yaml`, v1.0) ;
+- `data/antibiosentinelle.db` (base SQLite, non versionnée, reconstruite à chaque exécution).
 
 Les autres fichiers de `data/curated/` sont des étapes intermédiaires.
 
-Si la collecte échoue, le pipeline s'arrête et rien d'autre n'est lancé. Si un
-contrôle de cohérence échoue, rien n'est publié pour la source concernée.
+Si la collecte échoue, le pipeline s'arrête et rien d'autre n'est lancé.
+
+Si un contrôle de cohérence échoue, rien n'est publié pour la source concernée.
 
 ## Source et licence
 
@@ -68,7 +78,7 @@ contrôle de cohérence échoue, rien n'est publié pour la source concernée.
 - URL : https://zenodo.org/records/14224680 (deux fichiers : résistance et
   consommation)
 - Licence : Zenodo Open Access, à citer via le DOI
-- Date d'accès : 24/09/2026 (dernière collecte : 05/11/2026)
+- Date d'accès : 24/09/2026 (dernière collecte : 06/11/2026)
 - Aucune donnée personnelle : agrégation au niveau pays/année
 
 ## Règles de qualité
@@ -120,6 +130,41 @@ colonne `cause_rejet`. Le statut de chaque rapport (`PASS`,
 Idempotence : chaque `transform` met à jour son fichier final par UPSERT sur la
 clé métier. Relancer le pipeline ne crée aucun doublon.
 
+## Base SQLite et requêtes
+
+`load_sqlite.py` supprime puis recrée la base à chaque exécution : schéma
+(`sql/schema.sql`), six dimensions (pays, bacterie, classe, antibiotique,
+secteur, voie), puis les deux tables de mesures `resultat_resistance`
+(9 425 lignes) et `consommation` (7 029 lignes). Les clés étrangères sont
+activées ; le schéma impose clés primaires, clés étrangères, `UNIQUE` et
+`CHECK`, avec les mêmes bornes que les règles de qualité.
+
+Modèle : `docs/besoin_metier.md` (besoin, cardinalités, MLD) et
+`docs/mcd.png`. Note performance, logs, sécurité et RGPD : `docs/note_sqlite.md`.
+
+| Fichier | Rôle |
+|---|---|
+| `sql/schema.sql` | schéma complet, contraintes et index |
+| `sql/seed.sql` | petit jeu de test fictif (pas de résultats réels) |
+| `sql/queries.sql` | 11 requêtes commentées : KPI 1, 2 et 3, exploration, contrôles |
+| `sql/controle.sql` | 3 contrôles de rapprochement des requêtes |
+| `sql/explain.sql` | plan d'exécution avant et après l'index |
+
+Exécuter les requêtes : `python src\run_sql.py sql\queries.sql`. Tester le
+schéma : `python tests\test_schema.py` (1 ligne valide acceptée, 9 refusées).
+
+### Règles de calcul des KPI (appliquées dans les requêtes)
+
+- **KPI 1** : taux pondéré `somme(n_resistant) / somme(n_tested)`, jamais une
+  moyenne de taux. Sur `ESCCOL` et `CIP`, la moyenne simple s'écarte du taux
+  pondéré jusqu'à 6,5 points (Slovaquie : 0,4102 contre 0,3457).
+- **KPI 2** : DDD du secteur `Community`, classes `J01*`. Par pays, année et
+  classe : `All` seule, on prend `All` ; pas de `All`, on additionne les voies ;
+  `All` avec d'autres voies, le groupe est exclu (150 groupes sur 2 714).
+- **KPI 3** : jointure résistance / consommation sur pays, année et classe, après
+  agrégation de chaque côté au même grain. Version par classe (1 133 lignes) et
+  version ciblée, quinolones `J01M` et `ESCCOL` à `CIP` (199 lignes).
+
 ## Vérification des rejets
 
 Source B : les deux `DDD` négatives du fichier réel (République tchèque 2012,
@@ -134,17 +179,30 @@ la prendra toujours comme fichier le plus récent.
 
 ## Limites connues
 
-- **La jointure et les KPI ne sont pas réalisés.** Les deux curated existent
-  séparément ; le croisement résistance / consommation de la question
-  centrale reste à faire.
+- **Les KPI ne sont pas produits par le pipeline.** Ils sont calculés à la demande
+  par des requêtes SQL. La règle sur la voie `All` est recopiée dans trois
+  requêtes (4, 5 et 6 de `sql/queries.sql`) : une modification doit être faite
+  aux trois endroits.
 - **Résistance hospitalière contre consommation en ville.** La résistance (A)
   vient uniquement de patients hospitalisés (`INPAT`). Les KPI de consommation
   retenus portent sur le secteur `Community`, seul présent dans les 15 pays.
   Le croisement est donc descriptif, pas une preuve d'effet.
-- **Voie `All` non documentée.** Le producteur n'explique pas son sens ; elle
-  n'est pas un total des autres voies. La règle prévue (ne pas additionner
-  `All` et les voies, exclure les groupes ambigus des KPI) n'est appliquée par
-  aucun code. Le secteur `Total Care` n'est pas non plus documenté.
+- **Voie `All` : sens non documenté, et ce n'est pas un total.** Sur les 150
+  groupes où `All` coexiste avec d'autres voies, `All` ne vaut la somme des autres
+  voies (à 5 % près) que dans 7 cas ; elle est inférieure dans 100, supérieure
+  dans 33, et la somme est nulle dans 10. Comparer un pays qui ne déclare que
+  `All` à un pays qui déclare des voies séparées n'est donc pas garanti
+  équivalent. Le secteur `Total Care` n'est pas documenté non plus.
+- **Effet de composition au niveau de la classe.** Le taux d'une classe mélange
+  les bactéries et les antibiotiques testés l'année donnée : si le panel change,
+  le taux change sans que la résistance ait changé. Le croisement ciblé (une
+  bactérie, un antibiotique) l'évite.
+- **Couverture inégale.** France 2 417 153 souches testées (2001-2019),
+  Allemagne 1 213 930 (1999-2019) ; certains pays commencent en 1999, d'autres
+  en 2001, et un taux calculé sur toute la période n'a pas le même sens d'un
+  pays à l'autre.
+- **Valeur à vérifier** : Autriche, `ACISPP` et `CIP`, 0,0875 en 2018 puis 0,7297
+  en 2019 (74 souches). Aucune règle de validation ne la détecte.
 - **Secteur hospitalier incomplet.** Absent pour l'Autriche, la Tchéquie,
   l'Allemagne et l'Espagne, et intermittent ailleurs.
 - **Style de déclaration variable.** Avant 2010 environ, plusieurs pays
@@ -170,10 +228,14 @@ la prendra toujours comme fichier le plus récent.
 - Les sources sont des instantanés figés, sans mise à jour continue.
 - Si les noms de colonnes d'un fichier source changent, la validation échoue.
 - La collecte réessaie aussi sur les erreurs définitives (404).
+- La base SQLite est reconstruite à chaque exécution et dépend de Zenodo :
+  aucune sauvegarde chiffrée, pas de journal d'audit des modifications.
 - Les fichiers horodatés de `data/raw/`, `curated/`, `rejected/` et
   `out_of_scope/` s'accumulent en local (ignorés par Git).
-- Aucun test automatisé avec assertions : `tests/` contient seulement
-  `make_invalid_copy.py`, qui prépare un test manuel pour la source A.
+- Tests : `tests/test_schema.py` vérifie les contraintes du schéma avec
+  assertions. Les règles de validation de A ne sont testées que par
+  `make_invalid_copy.py`, à lancer à la main.
+- `docs/mcd.png` est une image générée par un script qui n'est pas versionné.
 
 ## Arborescence
 
@@ -190,22 +252,35 @@ AntibioSentinelle/
     curated/                  valides (horodates), consolide A, finals A et B
     rejected/                 lignes invalides + cause_rejet
     out_of_scope/             lignes valides hors des 15 pays retenus
+    antibiosentinelle.db      base SQLite (non versionnee)
   docs/
     architecture.png
     cadrage.md                cadrage et journal des decisions
+    besoin_metier.md          besoin, cardinalites, MLD
+    mcd.png                   modele conceptuel
+    note_sqlite.md            performance, logs, securite, RGPD
   reports/
     run_report.json           rapport source A
     run_report_amc.json       rapport source B
+  sql/
+    schema.sql                schema, contraintes, index
+    seed.sql                  jeu de test fictif
+    queries.sql               11 requetes commentees
+    controle.sql              controles de rapprochement
+    explain.sql               plan d'execution
   src/
     collect.py
     validate.py
     transform.py
     validate_amc.py
     transform_amc.py
-    pipeline.py
+    load_sqlite.py            chargement dans SQLite
+    run_sql.py                execute un fichier de requetes
+    pipeline.py               sept etapes
     profile.py                profilage source A
     profile_amc.py            profilage source B
     explore_amc*.py           explorations de la source B
   tests/
     make_invalid_copy.py      prepare une copie de A avec 3 lignes invalides
+    test_schema.py            test des contraintes du schema
 ```
