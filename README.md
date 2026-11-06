@@ -157,10 +157,10 @@ schéma : `python tests\test_schema.py` (1 ligne valide acceptée, 9 refusées).
 
 - **KPI 1** : taux pondéré `somme(n_resistant) / somme(n_tested)`, jamais une
   moyenne de taux. Sur `ESCCOL` et `CIP`, la moyenne simple s'écarte du taux
-  pondéré jusqu'à 6,5 points (Slovaquie : 0,4102 contre 0,3457).
+  pondéré, par exemple de 6,5 points pour la Slovaquie (0,4102 contre 0,3457).
 - **KPI 2** : DDD du secteur `Community`, classes `J01*`. Par pays, année et
   classe : `All` seule, on prend `All` ; pas de `All`, on additionne les voies ;
-  `All` avec d'autres voies, le groupe est exclu (150 groupes sur 2 714).
+  `All` avec d'autres voies, le groupe est exclu (145 groupes J01 sur 2 470).
 - **KPI 3** : jointure résistance / consommation sur pays, année et classe, après
   agrégation de chaque côté au même grain. Version par classe (1 133 lignes) et
   version ciblée, quinolones `J01M` et `ESCCOL` à `CIP` (199 lignes).
@@ -181,8 +181,7 @@ la prendra toujours comme fichier le plus récent.
 
 - **Les KPI ne sont pas produits par le pipeline.** Ils sont calculés à la demande
   par des requêtes SQL. La règle sur la voie `All` est recopiée dans trois
-  requêtes (4, 5 et 6 de `sql/queries.sql`) : une modification doit être faite
-  aux trois endroits.
+  requêtes (étiquetées 4, 5 et 6 dans sql/queries.sql) : une modification doit être faite aux trois endroits.
 - **Résistance hospitalière contre consommation en ville.** La résistance (A)
   vient uniquement de patients hospitalisés (`INPAT`). Les KPI de consommation
   retenus portent sur le secteur `Community`, seul présent dans les 15 pays.
@@ -198,8 +197,8 @@ la prendra toujours comme fichier le plus récent.
   le taux change sans que la résistance ait changé. Le croisement ciblé (une
   bactérie, un antibiotique) l'évite.
 - **Couverture inégale.** France 2 417 153 souches testées (2001-2019),
-  Allemagne 1 213 930 (1999-2019) ; certains pays commencent en 1999, d'autres
-  en 2001, et un taux calculé sur toute la période n'a pas le même sens d'un
+  Allemagne 1 213 930 (1999-2019) ; les pays commencent en 1999, 2000 ou
+  2001, et un taux calculé sur toute la période n'a pas le même sens d'un
   pays à l'autre.
 - **Valeur à vérifier** : Autriche, `ACISPP` et `CIP`, 0,0875 en 2018 puis 0,7297
   en 2019 (74 souches). Aucune règle de validation ne la détecte.
@@ -232,9 +231,10 @@ la prendra toujours comme fichier le plus récent.
   aucune sauvegarde chiffrée, pas de journal d'audit des modifications.
 - Les fichiers horodatés de `data/raw/`, `curated/`, `rejected/` et
   `out_of_scope/` s'accumulent en local (ignorés par Git).
-- Tests : `tests/test_schema.py` vérifie les contraintes du schéma avec
-  assertions. Les règles de validation de A ne sont testées que par
-  `make_invalid_copy.py`, à lancer à la main.
+- Tests : `tests/test_schema.py` vérifie 10 cas sur le schéma et échoue
+  (`AssertionError`) si une ligne invalide est acceptée. Les règles de
+  validation de A ne sont testées que par `make_invalid_copy.py`, à lancer à
+  la main.
 - `docs/mcd.png` est une image générée par un script qui n'est pas versionné.
 
 ## Arborescence
