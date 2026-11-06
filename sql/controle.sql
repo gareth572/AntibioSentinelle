@@ -25,4 +25,15 @@ FROM (
     WHERE s.nom = 'Community'
     GROUP BY c.id_pays, c.annee, c.id_classe
 ) g
-JOIN classe cl ON cl.id_classe = g.id_classe
+JOIN classe cl ON cl.id_classe = g.id_classe;
+
+-- Controle C : effectifs et taux de resistance de l'Autriche 2001, classe J01C, calcules directement
+-- Doit donner n_tested 655 et un taux de 0.1786 comme la requete 5
+SELECT SUM(r.n_tested) AS n_tested,
+       SUM(r.n_resistant) AS n_resistant,
+       ROUND(1.0 * SUM(r.n_resistant) / SUM(r.n_tested), 4) AS taux
+FROM resultat_resistance r
+JOIN pays p ON p.id_pays = r.id_pays
+JOIN antibiotique ab ON ab.id_antibiotique = r.id_antibiotique
+JOIN classe cl ON cl.id_classe = ab.id_classe
+WHERE p.nom = 'Austria' AND r.annee = 2001 AND cl.code_atc = 'J01C';

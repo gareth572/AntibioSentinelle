@@ -135,3 +135,51 @@ WHERE cl.code_atc LIKE 'J01%'
   -- groupes exclus = ceux ou ddd vaut NULL (All et autres voies)
   AND (g.a_all = 0 OR g.nb_voies = 1)
 ORDER BY p.nom, g.annee, cl.code_atc;
+
+-- Requete 5 - KPI 3 : consommation (DDD Community) et resistance ponderee par pays, annee et classe
+-- Chaque cote est agrege au grain pays, annee, classe avant la jointure pour eviter de multiplier les lignes
+SELECT
+    p.nom AS pays,
+    k.annee,
+    cl.code_atc AS classe,
+    k.ddd,
+    r.n_tested,
+    ROUND(1.0 * r.n_resistant / r.n_tested, 4) AS taux_resistance_pondere
+FROM (
+    -- requete 4 au grain id_pays, annee, id_classe (memes regles DDD)
+    SELECT
+        g.id_pays, g.annee, g.id_classe,
+        CASE
+            WHEN g.a_all > 0 AND g.nb_voies = 1 THEN g.ddd_all
+            WHEN g.a_all = 0 THEN g.ddd_autres
+        END AS ddd
+    FROM (
+        SELECT
+            c.id_pays, c.annee, c.id_classe,
+            COUNT(DISTINCT c.id_voie)                    AS nb_voies,
+            SUM(v.nom = 'All')                           AS a_all,
+            SUM(CASE WHEN v.nom = 'All' THEN c.ddd END)  AS ddd_all,
+            SUM(CASE WHEN v.nom <> 'All' THEN c.ddd END) AS ddd_autres
+        FROM consommation c
+        JOIN secteur s ON s.id_secteur = c.id_secteur
+        JOIN voie    v ON v.id_voie = c.id_voie
+        WHERE s.nom = 'Community'
+        GROUP BY c.id_pays, c.annee, c.id_classe
+    ) g
+    JOIN classe cl ON cl.id_classe = g.id_classe
+    WHERE cl.code_atc LIKE 'J01%'
+      AND (g.a_all = 0 OR g.nb_voies = 1)
+) k
+JOIN (
+    -- resistance sommee sur toutes les bacteries et antibiotiques d'une meme classe
+    SELECT
+        rr.id_pays, rr.annee, ab.id_classe,
+        SUM(rr.n_tested)    AS n_tested,
+        SUM(rr.n_resistant) AS n_resistant
+    FROM resultat_resistance rr
+    JOIN antibiotique ab ON ab.id_antibiotique = rr.id_antibiotique
+    GROUP BY rr.id_pays, rr.annee, ab.id_classe
+) r ON r.id_pays = k.id_pays AND r.annee = k.annee AND r.id_classe = k.id_classe
+JOIN pays   p  ON p.id_pays = k.id_pays
+JOIN classe cl ON cl.id_classe = k.id_classe
+ORDER BY p.nom, k.annee, cl.code_atc;
