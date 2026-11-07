@@ -16,6 +16,12 @@ des deux sources, 11 requêtes commentées, index et plan d'exécution. Les troi
 KPI sont calculés par des requêtes SQL, à la demande : le pipeline Python ne les
 produit pas.
 
+Séance 3 : dossier d'architecture (`docs/seance3.md`), architecture cible v2
+(`docs/architecture_v2.md`), ADR 001 et 002 (`docs/adr/`), grille RGPD
+(`docs/grille_rgpd.md`) et pitch (`docs/pitch.md`). L'architecture cible n'est
+pas encore implémentée : seul le pipeline actuel en 7 étapes existe. La revue
+entre pairs reste à faire.
+
 Voir « Limites connues » et `docs/cadrage.md`.
 
 ## Installation
@@ -254,8 +260,14 @@ AntibioSentinelle/
     out_of_scope/             lignes valides hors des 15 pays retenus
     antibiosentinelle.db      base SQLite (non versionnee)
   docs/
-    architecture.png
-    architecture_v1.png
+    architecture.png          pipeline reel en 7 etapes
+    architecture_v1.png       architecture visee en seance 1
+    architecture_v2.png       architecture cible v2 (schema)
+    architecture_v2.md        architecture cible, comparaison de 3 options
+    seance3.md                dossier d'architecture de la seance 3
+    adr/                      ADR 001 (architecture cible), ADR 002 (SQLite)
+    grille_rgpd.md            grille RGPD (6 questions)
+    pitch.md                  pitch de 3 minutes et reponses aux questions
     cadrage.md                cadrage et journal des decisions
     besoin_metier.md          besoin, cardinalites, MLD
     mcd.png                   modele conceptuel
