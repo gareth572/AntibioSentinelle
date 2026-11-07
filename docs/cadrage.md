@@ -249,8 +249,10 @@ sans intervention manuelle sur le contenu.
   montre maintenant le pipeline réel en 7 étapes (deux branches qui se
   rejoignent au chargement SQLite). L'ancien schéma de la séance 1, qui montrait
   l'architecture visée, est conservé dans `docs/architecture_v1.png`.
-- **Séance 3 (6 novembre)** : grille RGPD (`docs/grille_rgpd.md`) : aucune donnée
+- **Séance 3 (6-7 novembre)** : grille RGPD (`docs/grille_rgpd.md`) : aucune donnée
   personnelle dans les sources, seule l'identité de l'auteur figure dans les
-  commits ; ADR 001 (`docs/adr/001-sqlite.md`) : SQLite retenu face à CSV avec
-  pandas, PostgreSQL et DuckDB ; architecture v2 (`docs/architecture_v2.md`) et
-  pitch (`docs/pitch.md`).
+  commits (dépôt public) ; dossier d'architecture (`docs/seance3.md`) :
+  diagnostic, exigences chiffrées, couches, SQL ou NoSQL, batch, DAG,
+  observabilité, gouvernance ; architecture cible v2 (`docs/architecture_v2.md`) ;
+  ADR 001 (architecture cible) et ADR 002 (SQLite, face à CSV avec pandas,
+  PostgreSQL et DuckDB).

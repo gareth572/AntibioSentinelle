@@ -136,7 +136,7 @@ L'orchestrateur est `src/pipeline.py` : il lance les 7 scripts l'un après l'aut
 | Volume | Nombre de lignes chargées | 9 425 (A) et 7 029 (B) ; écart de plus de 5 % à enquêter | Lire le rapport, vérifier la source |
 | Qualité | Taux de rejet (lignes invalides sur lignes en entrée) | Objectif : moins de 2 %. Mesuré : 0 sur 11 876 (A) et 2 sur 14 084 (B, soit 0,014 %). | Lire `cause_rejet`, ajuster les règles |
 | Fiabilité | Taux d'échec du pipeline | 0 échec non repris (1 incident réel observé : timeout Zenodo, repris par les tentatives) | Relancer, puis vérifier la source |
-| Performance | Durée d'exécution | Moins de 2 minutes. Mesuré : 17,5 s au total ; validation A 0,49 s et validation B 0,16 s. | Chercher l'étape lente |
+| Performance | Durée d'exécution | Moins de 2 minutes. Mesuré : 17,5 s au total ; validation A 0,56 s et validation B 0,17 s. | Chercher l'étape lente |
 
 **Limite.** Le seuil de 2 % est un objectif, pas encore une règle du code : aujourd'hui, une seule ligne invalide donne `PASS_WITH_WARNINGS`, et `FAIL` n'apparaît que si aucune ligne n'est acceptée. Amélioration prévue : passer en `FAIL` au-dessus de 2 % et faire arrêter le pipeline.
 
